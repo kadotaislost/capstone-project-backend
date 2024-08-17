@@ -1,11 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.utils import timezone
-import datetime
-
+import datetime, random
 # Create your models here.
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email, full_name, password= None, phone_number= None, blood_group = None, dob = None):
+    def create_user(self, email, full_name, password, phone_number= None, blood_group = None, dob = None):
     
         if not email:
             raise ValueError("The Email field must be set to a valid email address")
@@ -22,15 +21,13 @@ class CustomUserManager(BaseUserManager):
             dob = dob
         )
         
-        if password:
-            user.set_password(password)
-        else:
-            raise ValueError("Password must be set")
-        
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email, full_name, password=None):
+        if password is None:
+            raise ValueError("Superusers must have a password.")
     
         user = self.create_user(
             email,
@@ -51,9 +48,10 @@ class User(AbstractBaseUser):
     blood_group = models.CharField(max_length=3, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    email_verified = models.BooleanField(default=False)
     
     objects = CustomUserManager()
     
@@ -64,8 +62,33 @@ class User(AbstractBaseUser):
         return f'{self.email} - {self.full_name}'
     
     def has_perm(self, perm, obj=None):
+        "Does the user have a specific permission?"
+        # Simplest possible answer: Yes, always
         return self.is_superuser
 
     def has_module_perms(self, app_label):
-        return self.is_superuser
+        "Does the user have permissions to view the app `app_label`?"
+        # Simplest possible answer: Yes, always
+        return True
+
     
+class EmailVerification(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='email_verification')
+    otp = models.CharField(max_length=4, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + datetime.timedelta(minutes=5)
+    
+    def refresh_otp(self):
+        self.otp = str(random.randint(1000, 9999))
+        self.created_at = timezone.now()
+        self.save()
+
+    def __str__(self):
+        return f'{self.user.email} - {self.otp}'
+    
+    
+
+    
+
