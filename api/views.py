@@ -1,11 +1,13 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializers import UserRegistrationSerializer , EmailVerificationSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import IsAuthenticated
+from .serializers import UserRegistrationSerializer , EmailVerificationSerializer , LoginSerializer
+from rest_framework_simplejwt.tokens import RefreshToken 
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.mail import send_mail
 from .models import EmailVerification
+
+
 
 # Create your views here.
 class UserRegisterView(APIView):
@@ -46,6 +48,16 @@ class ResendOTPView(APIView):
             return Response({"message": "New OTP sent successfully."}, status=status.HTTP_200_OK)
         except EmailVerification.DoesNotExist:
             return Response({"error": "No verification process found for this user."}, status=status.HTTP_400_BAD_REQUEST)
+        
+class UserLoginView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, *args, **kwargs):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            token = get_tokens_for_user(user)
+            return Response({'message': "Login Successful!",'token': token}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
           
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)

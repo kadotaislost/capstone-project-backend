@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.password_validation import validate_password
 import random
 from .models import EmailVerification
+from django.contrib.auth import authenticate
 
 User = get_user_model()
 
@@ -68,3 +69,25 @@ class EmailVerificationSerializer(serializers.Serializer):
         user.email_verified = True  # Activate the user
         user.save()
         verification.delete()
+        
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+
+        if email is None or password is None:
+            raise serializers.ValidationError("Both email and password are required.")
+
+        user = authenticate(email=email, password=password)
+
+        if user is None:
+            raise serializers.ValidationError("Invalid Credentials.")
+
+        if not user.email_verified:
+            raise serializers.ValidationError("Email is not verified. Please verify your email to log in.")
+
+        data['user'] = user
+        return data
