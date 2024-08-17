@@ -91,3 +91,20 @@ class LoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+    
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    confirm_new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_new_password']:
+            raise serializers.ValidationError("New passwords do not match")
+        validate_password(data['new_password'], self.context['request'].user)
+        return data
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect")
+        return value
