@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.utils import timezone
-import datetime, random
+import datetime, random, string
 # Create your models here.
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, full_name, password, phone_number= None, blood_group = None, dob = None):
@@ -81,7 +81,7 @@ class EmailVerification(models.Model):
         return timezone.now() > self.created_at + datetime.timedelta(minutes=5)
     
     def refresh_otp(self):
-        self.otp = str(random.randint(1000, 9999))
+        self.otp = ''.join(random.choices(string.digits, k=4))  # Using string.digits for generating OTP
         self.created_at = timezone.now()
         self.save()
 

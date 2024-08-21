@@ -3,46 +3,49 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.contrib.auth.password_validation import validate_password
-import random
+import random , string
 from .models import EmailVerification
 from django.contrib.auth import authenticate
+from django.utils.encoding import force_bytes , force_str, DjangoUnicodeDecodeError
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 User = get_user_model()
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     confirm_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
-    
+
     class Meta:
         model = User
         fields = ['email', 'full_name', 'phone_number', 'blood_group', 'dob', 'password', 'confirm_password']
-        
+
     def validate(self, data):
         if data['password'] != data['confirm_password']:
             raise serializers.ValidationError("Passwords do not match")
-        try: 
+        try:
             validate_password(data['password'])
         except serializers.ValidationError as e:
             raise serializers.ValidationError({"password": list(e.messages)})
         return data
-    
+
     def create(self, validated_data):
         validated_data.pop('confirm_password')
         user = User.objects.create_user(**validated_data)
-        
-        otp_code = str(random.randint(1000, 9999))
+        self.send_verification_email(user)
+        return user
+
+    def send_verification_email(self, user):
+        otp_code = ''.join(random.choices(string.digits, k=4))
         EmailVerification.objects.create(user=user, otp=otp_code)
-        
         send_mail(
             'Your Email Verification Code',
-            f'Thankyou for registering for PrescriptAid.Your OTP code is {otp_code}',
-            'prescriptaidnepal@gmail.com',  
+            f'Thank you for registering for PrescriptAid. Your OTP code is {otp_code}',
+            'prescriptaidnepal@gmail.com',
             [user.email],
             fail_silently=False,
         )
         
-        return user
         
 class EmailVerificationSerializer(serializers.Serializer):
     otp = serializers.CharField(max_length=4)
@@ -100,7 +103,12 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate(self, data):
         if data['new_password'] != data['confirm_new_password']:
             raise serializers.ValidationError("New passwords do not match")
-        validate_password(data['new_password'], self.context['request'].user)
+        if data['old_password'] == data['new_password']:
+            raise serializers.ValidationError("New password cannot be the same as the old password")
+        try:
+            validate_password(data['new_password'], self.context['request'].user)
+        except serializers.ValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})      
         return data
 
     def validate_old_password(self, value):
@@ -108,3 +116,39 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect")
         return value
+  
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=255)
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No account found with this email address.")
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+    confirm_new_password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
+
+    def validate(self, data):
+        new_password = data['new_password']
+        confirm_new_password = data['confirm_new_password']
+        uid = self.context['uid']
+        token = self.context['token']
+        
+        if new_password != confirm_new_password:
+            raise serializers.ValidationError("Passwords do not match")
+        
+        uid = force_str(urlsafe_base64_decode(uid))
+        user = User.objects.get(id=uid)
+        try:
+            validate_password(new_password, user)
+        except serializers.ValidationError as e:
+            raise serializers.ValidationError({"password": list(e.messages)})
+        
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            raise serializers.ValidationError("Invalid or expired token")
+        
+        user.set_password(new_password)
+        user.save()
+        return data
