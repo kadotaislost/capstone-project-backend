@@ -153,18 +153,29 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.save()
         return data
     
-class UserUpdateSerializer(serializers.Serializer):
-    full_name = serializers.CharField(max_length=255, required=False)
-    phone_number = serializers.CharField(max_length=10, required=False)
-    blood_group = serializers.CharField(max_length=3, required=False)
-    dob = serializers.DateField(required=False)
+class UserUpdateSerializer(serializers.ModelSerializer):
+    profile_pic = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['email', 'full_name', 'phone_number', 'blood_group', 'dob', 'profile_pic']
     
+    def get_profile_pic(self, obj):
+        if obj.profile_pic:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_pic.url)
+            return obj.profile_pic.url
+        return None
+
     def update(self, instance, validated_data):
+        instance.email = validated_data.get('email', instance.email)
         instance.full_name = validated_data.get('full_name', instance.full_name)
         instance.phone_number = validated_data.get('phone_number', instance.phone_number)
         instance.blood_group = validated_data.get('blood_group', instance.blood_group)
         instance.dob = validated_data.get('dob', instance.dob)
+        if 'profile_pic' in validated_data:
+            instance.profile_pic = validated_data.get('profile_pic', instance.profile_pic)
         instance.save()
         return instance
-
     

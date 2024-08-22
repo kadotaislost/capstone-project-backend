@@ -84,7 +84,7 @@ class PasswordResetRequestView(APIView):
         user = User.objects.get(email=email)
         uid = urlsafe_base64_encode(force_bytes(user.id))
         token = PasswordResetTokenGenerator().make_token(user)
-        link = f"http://localhost:3000/reset-password-request/{uid}/{token}"
+        link = f"http://localhost:3000/password-reset-request/{uid}/{token}"
         
         send_mail(
             'Password Reset Request',
@@ -103,14 +103,18 @@ class PasswordResetConfirmView(APIView):
         serializer.is_valid(raise_exception=True)
         return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
         
-class UpdateUserProfileView(APIView):
+class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        serializer = UserUpdateSerializer(request.user , context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def put(self, request):
         serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response({"message": "Profile updated successfully"}, status=status.HTTP_200_OK)
+        return Response({"message": "Profile updated successfully."}, status=status.HTTP_200_OK)
 
 
 def get_tokens_for_user(user):

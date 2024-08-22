@@ -46,6 +46,7 @@ class User(AbstractBaseUser):
     phone_number = models.CharField(max_length=10, null=True, blank=True)
     dob = models.DateField(null=True, blank=True)
     blood_group = models.CharField(max_length=3, null=True, blank=True)
+    profile_pic = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
