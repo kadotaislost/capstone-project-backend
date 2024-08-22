@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .serializers import UserRegistrationSerializer , EmailVerificationSerializer , LoginSerializer, ChangePasswordSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+from .serializers import UserRegistrationSerializer , EmailVerificationSerializer , LoginSerializer, ChangePasswordSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, UserUpdateSerializer
 from rest_framework_simplejwt.tokens import RefreshToken 
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.mail import send_mail
@@ -101,9 +101,18 @@ class PasswordResetConfirmView(APIView):
     def post(self, request, uid, token):
         serializer = PasswordResetConfirmSerializer(data=request.data , context = {'uid': uid, 'token': token})
         serializer.is_valid(raise_exception=True)
-        return Response({"message": "Password reset successful."}, status=status.HTTP_200_OK)
+        return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
         
-          
+class UpdateUserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Profile updated successfully"}, status=status.HTTP_200_OK)
+
+
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
 

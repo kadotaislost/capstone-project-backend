@@ -152,3 +152,19 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.set_password(new_password)
         user.save()
         return data
+    
+class UserUpdateSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=255, required=False)
+    phone_number = serializers.CharField(max_length=10, required=False)
+    blood_group = serializers.CharField(max_length=3, required=False)
+    dob = serializers.DateField(required=False)
+    
+    def update(self, instance, validated_data):
+        instance.full_name = validated_data.get('full_name', instance.full_name)
+        instance.phone_number = validated_data.get('phone_number', instance.phone_number)
+        instance.blood_group = validated_data.get('blood_group', instance.blood_group)
+        instance.dob = validated_data.get('dob', instance.dob)
+        instance.save()
+        return instance
+
+    
