@@ -15,12 +15,14 @@ User = get_user_model()
 
 # Create your views here.
 class UserRegisterView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
         serializer = UserRegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         token = get_tokens_for_user(user)
         return Response({"message": "User registered successfully. Please verify your email to activate the account.", "token": token}, status=status.HTTP_201_CREATED)
+ 
 
 # Email Verification View
 class VerifyEmailView(APIView):
