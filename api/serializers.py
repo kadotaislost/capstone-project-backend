@@ -154,19 +154,11 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         return data
     
 class UserUpdateSerializer(serializers.ModelSerializer):
-    profile_pic = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ['email', 'full_name', 'phone_number', 'blood_group', 'dob', 'profile_pic']
     
-    def get_profile_pic(self, obj):
-        if obj.profile_pic:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.profile_pic.url)
-            return obj.profile_pic.url
-        return None
 
     def update(self, instance, validated_data):
         instance.email = validated_data.get('email', instance.email)
