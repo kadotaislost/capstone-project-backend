@@ -41,14 +41,28 @@ class ResendOTPView(APIView):
         try:
             verification = EmailVerification.objects.get(user=user)
             verification.refresh_otp()
-            
+                        
             send_mail(
-                'Your New Email Verification Code',
-                f'Your new OTP code is {verification.otp}',
+                'Your New OTP Code for Email Verification - PrescriptAid',
+                f'''
+                Dear {user.full_name},
+
+                We noticed that you requested a new One-Time Password (OTP) to verify your email address. Please find your new OTP below:
+
+                Your New OTP Code: {verification.otp}
+
+                This code will expire in 5 minutes. If you did not request a new OTP, please ignore this email or reach out to our support team for assistance.
+
+                Thank you for choosing PrescriptAid!
+
+                Best regards,
+                The PrescriptAid Team
+                ''',
                 'prescriptaidnepal@gmail.com',
                 [user.email],
                 fail_silently=False,
             )
+
             
             return Response({"message": "New OTP sent successfully."}, status=status.HTTP_200_OK)
         except EmailVerification.DoesNotExist:
@@ -86,11 +100,22 @@ class PasswordResetRequestView(APIView):
         user = User.objects.get(email=email)
         uid = urlsafe_base64_encode(force_bytes(user.id))
         token = PasswordResetTokenGenerator().make_token(user)
-        link = f"http://localhost:3000/password-reset-request/{uid}/{token}"
-        
+        link = f"http://localhost:8000/password-reset-request/{uid}/{token}"
+                
         send_mail(
-            'Password Reset Request',
-            f'Please click on the link below to reset your password: {link}',
+            'Reset Your Password for PrescriptAid',
+            f'''
+            Dear {user.full_name},
+
+            We received a request to reset your password for your PrescriptAid account. To proceed, please click the link below:
+
+            Reset Password Link: {link}
+
+            This link is valid for the next 15 minutes. If you did not request a password reset, please disregard this email.
+
+            Stay safe,
+            The PrescriptAid Team
+            ''',
             'prescriptaidnepal@gmail.com',
             [user.email],
             fail_silently=False,

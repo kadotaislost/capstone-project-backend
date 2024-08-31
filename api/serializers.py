@@ -39,8 +39,19 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         otp_code = ''.join(random.choices(string.digits, k=4))
         EmailVerification.objects.create(user=user, otp=otp_code)
         send_mail(
-            'Your Email Verification Code',
-            f'Thank you for registering for PrescriptAid. Your OTP code is {otp_code}',
+            'Verify Your Email for PrescriptAid',
+            f'''
+            Dear {user.full_name},
+
+            Thank you for registering with PrescriptAid! To complete your registration, please use the One-Time Password (OTP) provided below to verify your email address.
+
+            Your OTP Code: {otp_code}
+
+            This code is valid for the next 5 minutes. If you did not request this verification, please ignore this email.
+
+            Best regards,
+            The PrescriptAid Team
+            ''',
             'prescriptaidnepal@gmail.com',
             [user.email],
             fail_silently=False,
@@ -48,7 +59,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         
 class EmailVerificationSerializer(serializers.Serializer):
-    otp = serializers.CharField(max_length=4)
+    otp = serializers.CharField(max_length=4, min_length=4)
     
     def validate(self, data):
         otp_code = data.get('otp')
@@ -141,13 +152,13 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         
         uid = force_str(urlsafe_base64_decode(uid))
         user = User.objects.get(id=uid)
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            raise serializers.ValidationError({"error":"The password reset link has expired. Please request a new one."})
         try:
             validate_password(new_password, user)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({"password": list(e.messages)})
         
-        if not PasswordResetTokenGenerator().check_token(user, token):
-            raise serializers.ValidationError("Invalid or expired token")
         
         user.set_password(new_password)
         user.save()
