@@ -8,7 +8,7 @@ from .models import EmailVerification
 from django.contrib.auth import authenticate
 from django.utils.encoding import force_bytes , force_str, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.auth.tokens import default_token_generator
 
 User = get_user_model()
 
@@ -41,17 +41,17 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         send_mail(
             'Verify Your Email for PrescriptAid',
             f'''
-            Dear {user.full_name},
+Dear {user.full_name},
 
-            Thank you for registering with PrescriptAid! To complete your registration, please use the One-Time Password (OTP) provided below to verify your email address.
+Thank you for registering with PrescriptAid! To complete your registration, please use the One-Time Password (OTP) provided below to verify your email address.
 
-            Your OTP Code: {otp_code}
+Your OTP Code: {otp_code}
 
-            This code is valid for the next 5 minutes. If you did not request this verification, please ignore this email.
+This code is valid for the next 5 minutes. If you did not request this verification, please ignore this email.
 
-            Best regards,
-            The PrescriptAid Team
-            ''',
+Best regards,
+The PrescriptAid Team
+''',
             'prescriptaidnepal@gmail.com',
             [user.email],
             fail_silently=False,
@@ -150,19 +150,27 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if new_password != confirm_new_password:
             raise serializers.ValidationError("Passwords do not match")
         
-        uid = force_str(urlsafe_base64_decode(uid))
-        user = User.objects.get(id=uid)
-        if not PasswordResetTokenGenerator().check_token(user, token):
+        try:
+            uid = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(id=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise serializers.ValidationError({"error": "Invalid user ID"})
+        
+        if not default_token_generator.check_token(user, token):
             raise serializers.ValidationError({"error":"The password reset link has expired. Please request a new one."})
         try:
             validate_password(new_password, user)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({"password": list(e.messages)})
-        
-        
-        user.set_password(new_password)
+        data['user'] = user
+        return data   
+
+    
+    def save(self):
+        user = self.validated_data['user']
+        user.set_password(self.validated_data['new_password'])
         user.save()
-        return data
+
     
 class UserUpdateSerializer(serializers.ModelSerializer):
 

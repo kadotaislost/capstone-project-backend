@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from .models import EmailVerification
 from django.utils.encoding import force_bytes , force_str, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -45,18 +45,18 @@ class ResendOTPView(APIView):
             send_mail(
                 'Your New OTP Code for Email Verification - PrescriptAid',
                 f'''
-                Dear {user.full_name},
+Dear {user.full_name},
 
-                We noticed that you requested a new One-Time Password (OTP) to verify your email address. Please find your new OTP below:
+We noticed that you requested a new One-Time Password (OTP) to verify your email address. Please find your new OTP below:
 
-                Your New OTP Code: {verification.otp}
+Your New OTP Code: {verification.otp}
 
-                This code will expire in 5 minutes. If you did not request a new OTP, please ignore this email or reach out to our support team for assistance.
+This code will expire in 5 minutes. If you did not request a new OTP, please ignore this email or reach out to our support team for assistance.
 
-                Thank you for choosing PrescriptAid!
+Thank you for choosing PrescriptAid!
 
-                Best regards,
-                The PrescriptAid Team
+Best regards,
+The PrescriptAid Team
                 ''',
                 'prescriptaidnepal@gmail.com',
                 [user.email],
@@ -99,22 +99,22 @@ class PasswordResetRequestView(APIView):
         email = serializer.validated_data['email']
         user = User.objects.get(email=email)
         uid = urlsafe_base64_encode(force_bytes(user.id))
-        token = PasswordResetTokenGenerator().make_token(user)
+        token = default_token_generator.make_token(user)
         link = f"http://localhost:8000/password-reset-request/{uid}/{token}"
                 
         send_mail(
             'Reset Your Password for PrescriptAid',
             f'''
-            Dear {user.full_name},
+Dear {user.full_name},
 
-            We received a request to reset your password for your PrescriptAid account. To proceed, please click the link below:
+We received a request to reset your password for your PrescriptAid account. To proceed, please click the link below:
 
-            Reset Password Link: {link}
+Reset Password Link: {link}
 
-            This link is valid for the next 15 minutes. If you did not request a password reset, please disregard this email.
+This link is valid for the next 15 minutes. If you did not request a password reset, please disregard this email.
 
-            Stay safe,
-            The PrescriptAid Team
+Stay safe,
+The PrescriptAid Team
             ''',
             'prescriptaidnepal@gmail.com',
             [user.email],
@@ -128,6 +128,7 @@ class PasswordResetConfirmView(APIView):
     def post(self, request, uid, token):
         serializer = PasswordResetConfirmSerializer(data=request.data , context = {'uid': uid, 'token': token})
         serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
         
 class UserProfileView(APIView):
