@@ -14,5 +14,6 @@ urlpatterns = [
     path('update-user-profile/', views.UserProfileView.as_view(), name='update-user-profile'),
     path('get-user-profile/', views.UserProfileView.as_view(), name='get-user-profile'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
+    path('search-medicine/', views.MedicineSearchView.as_view(), name='search-medicine'),
 ]
 
