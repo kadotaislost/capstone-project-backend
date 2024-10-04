@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'api',
-    'reminders',
+    'medicine_reminder',
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
