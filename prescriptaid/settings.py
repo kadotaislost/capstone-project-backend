@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'medicine_reminder',
     'rest_framework',
     'corsheaders',
+    'prescriptions',
     'rest_framework_simplejwt.token_blacklist',
 ]
 
