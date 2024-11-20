@@ -11,7 +11,7 @@ import google.generativeai as genai
 import os
 from django.conf import settings
 from .predict import ImageToWordModel
-from rest_framework.permissions import IsAuthenticated # Ensure correct import based on your project structure
+from rest_framework.permissions import IsAuthenticated 
 import tempfile
 
 
@@ -137,3 +137,24 @@ class HandwritingAnalysisView(APIView):
         except Exception as e:
             # Handle errors gracefully and return a placeholder message
             return f"An error occurred while analyzing the text: {str(e)}"
+
+
+class UserPrescriptionsView(APIView):
+    """
+    API view to list all prescriptions of the authenticated user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            # Fetch all prescriptions for the authenticated user
+            prescriptions = HandwritingAnalysisTable.objects.filter(user=request.user)
+
+            # Serialize the data
+            serializer = HandwritingAnalysisSerializer(prescriptions, many=True)
+
+            # Return the serialized data
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

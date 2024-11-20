@@ -6,3 +6,5 @@ class HandwritingAnalysisSerializer(serializers.ModelSerializer):
         model = HandwritingAnalysisTable
         fields = ['id', 'image_url', 'recognized_text', 'analyzed_text', 'created_at']
         read_only_fields = ['recognized_text', 'analyzed_text', 'created_at']
+
+
