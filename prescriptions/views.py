@@ -12,8 +12,9 @@ import os
 from django.conf import settings
 from .predict import ImageToWordModel
 from rest_framework.permissions import IsAuthenticated 
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 import tempfile
-
 
 
 # Load model configurations and initialize the model globally
@@ -26,48 +27,80 @@ class HandwritingAnalysisView(APIView):
     API view to process an image URL, recognize handwriting, analyze text, and save to the database.
     """
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        # Extract image_url from the request
-        image_url = request.data.get('image_url')
-        if not image_url:
-            return Response({"error": "image_url is required"}, status=status.HTTP_400_BAD_REQUEST)
+        # Validate the input data
+        serializer = HandwritingAnalysisSerializer(data=request.data, context={'request': request})
+        
+        if not serializer.is_valid():
+            return Response(
+                {"error": "Validation failed", "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        image_url = serializer.validated_data.get('image_url')
 
         try:
             # Step 1: Download the image from the URL
-            response = requests.get(image_url)
+            response = requests.get(image_url, timeout=10)  # Adding a timeout for better control
             if response.status_code != 200:
-                return Response({"error": "Failed to download image"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Failed to download the image", "details": f"HTTP {response.status_code}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Decode the image from the response content
             image_data = np.frombuffer(response.content, np.uint8)
             image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+            if image is None:
+                return Response(
+                    {"error": "Failed to decode the image", "details": "The provided URL does not contain a valid image"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             # Step 2: Predict the recognized text using the model
-            recognized_text = model.predict(image)
+            try:
+                recognized_text = model.predict(image)
+            except Exception as e:
+                return Response(
+                    {"error": "Handwriting recognition failed", "details": str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
             # Step 3: Analyze the recognized text using Gemini API
             analyzed_text = self.analyze_text_with_gemini(recognized_text)
 
-            # Step 4: Save the results to the database
-            analysis = HandwritingAnalysisTable.objects.create(
-                user=request.user,  # Associate the analysis with the authenticated user
-                image_url=image_url,
-                recognized_text=recognized_text,
-                analyzed_text=analyzed_text
-            )
+            # Save the results to the database via serializer
+            try:
+                serializer.save(
+                    user=request.user,  # Associate the analysis with the authenticated user
+                    recognized_text=recognized_text,
+                    analyzed_text=analyzed_text
+                )
+            except Exception as e:
+                return Response(
+                    {"error": "Failed to save analysis results", "details": str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
-            # Step 5: Serialize the saved instance and return the response
-            serializer = HandwritingAnalysisSerializer(analysis)
+            # Return the serialized data as a response
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+        except requests.exceptions.RequestException as e:
+            return Response(
+                {"error": "Failed to fetch the image", "details": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": "An unexpected error occurred", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def analyze_text_with_gemini(self, text):
         genai.configure(api_key=settings.GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
-        # Updated Prompt for the AI model
         prompt = f"""
         You will analyze the text provided below and determine its nature. Follow these steps:
 
@@ -129,16 +162,12 @@ class HandwritingAnalysisView(APIView):
         Please analyze the text and provide a response adhering to the appropriate structure and guidelines.
         """
         try:
-            # Generate response using the Gemini API
             response = model.generate_content(prompt)
-            analysis = response.text  # Access the `text` property of the `GenerateContentResponse` object
-            return analysis
-
+            return response.text
         except Exception as e:
-            # Handle errors gracefully and return a placeholder message
             return f"An error occurred while analyzing the text: {str(e)}"
 
-
+   
 class UserPrescriptionsView(APIView):
     """
     API view to list all prescriptions of the authenticated user.
@@ -146,15 +175,73 @@ class UserPrescriptionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Fetch all prescriptions for the authenticated user
+        prescriptions = HandwritingAnalysisTable.objects.filter(user=request.user)
+
+        if not prescriptions.exists():
+            return Response(
+                {"message": "No prescriptions found for this user."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Serialize the data
+        serializer = HandwritingAnalysisSerializer(prescriptions, many=True)
+
+        # Return the serialized data
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        
+class PrescriptionDetailView(APIView):
+    """
+    API view to retrieve and delete a specific prescription by ID.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, prescription_id):
         try:
-            # Fetch all prescriptions for the authenticated user
-            prescriptions = HandwritingAnalysisTable.objects.filter(user=request.user)
-
-            # Serialize the data
-            serializer = HandwritingAnalysisSerializer(prescriptions, many=True)
-
-            # Return the serialized data
+            prescription = get_object_or_404(
+                HandwritingAnalysisTable,
+                id=prescription_id,
+                user=request.user
+            )
+            serializer = HandwritingAnalysisSerializer(prescription)
             return Response(serializer.data, status=status.HTTP_200_OK)
-
+        except Http404:
+            return Response(
+                {"error": "Prescription not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def delete(self, request, prescription_id):
+        try:
+            # Get and verify prescription belongs to user
+            prescription = get_object_or_404(
+                HandwritingAnalysisTable,
+                id=prescription_id,
+                user=request.user
+            )
+            
+            # Delete the prescription
+            prescription.delete()
+            
+            return Response(
+                {"message": "Prescription deleted successfully"},
+                status=status.HTTP_204_NO_CONTENT
+            )
+            
+        except Http404:
+            # Handle the case where get_object_or_404 raises a 404
+            return Response(
+                {"error": "Prescription not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

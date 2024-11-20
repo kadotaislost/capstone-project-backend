@@ -27,39 +27,39 @@ class ImageToWordModel(OnnxInferenceModel):
         return text
 
 
-# Configuration       
-cloudinary.config( 
-    cloud_name = "doafbg5ys", 
-    api_key = "427425611218285", 
-    api_secret = "DWVz5n-AfuYaa0_UQpc3f1iizQM", # Click 'View API Keys' above to copy your API secret
-    secure=True
-)
+# # Configuration       
+# cloudinary.config( 
+#     cloud_name = "doafbg5ys", 
+#     api_key = "427425611218285", 
+#     api_secret = "DWVz5n-AfuYaa0_UQpc3f1iizQM", # Click 'View API Keys' above to copy your API secret
+#     secure=True
+# )
 
-# Upload an image
+# # Upload an image
 
-if __name__ == "__main__":
-    import pandas as pd
-    from tqdm import tqdm
-    from mltu.configs import BaseModelConfigs
-    import tempfile
+# if __name__ == "__main__":
+#     import pandas as pd
+#     from tqdm import tqdm
+#     from mltu.configs import BaseModelConfigs
+#     import tempfile
     
-    upload_result = cloudinary.uploader.upload("aryan-removebg-preview(1).jpg"
-                                           )
-    url = upload_result["secure_url"]
-    print(url)
-    response = requests.get(url)
-    image_data= np.frombuffer(response.content, np.uint8)
-    # Step 2: Decode the image data for OpenCV
-    image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
-    # Step 3: Use the image directly in OpenCV or save it as a temporary file
-    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
-        temp_file_name = temp_file.name
-        cv2.imwrite(temp_file_name, image)
+#     upload_result = cloudinary.uploader.upload("aryan-removebg-preview(1).jpg"
+#                                            )
+#     url = upload_result["secure_url"]
+#     print(url)
+#     response = requests.get(url)
+#     image_data= np.frombuffer(response.content, np.uint8)
+#     # Step 2: Decode the image data for OpenCV
+#     image = cv2.imdecode(image_data, cv2.IMREAD_COLOR)
+#     # Step 3: Use the image directly in OpenCV or save it as a temporary file
+#     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_file:
+#         temp_file_name = temp_file.name
+#         cv2.imwrite(temp_file_name, image)
     
-    configs = BaseModelConfigs.load("configs.yaml")
+#     configs = BaseModelConfigs.load("configs.yaml")
     
-    image = cv2.imread(temp_file_name)
+#     image = cv2.imread(temp_file_name)
 
-    model = ImageToWordModel(model_path= "model.onnx", char_list=configs.vocab)
-    text = model.predict(image)
-    print(text)
+#     model = ImageToWordModel(model_path= "model.onnx", char_list=configs.vocab)
+#     text = model.predict(image)
+#     print(text)
