@@ -8,7 +8,7 @@ class ReminderTimeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ReminderTime
-        fields = ['id', 'time', 'dosage']
+        fields = ['id', 'time', 'dosage', 'unit']
 
     def validate_time(self, value):
         try:

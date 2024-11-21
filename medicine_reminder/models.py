@@ -43,7 +43,8 @@ class ReminderTime(models.Model):
     reminder = models.ForeignKey(Reminder, related_name='times', on_delete=models.CASCADE)
     time = models.TimeField()
     dosage = models.CharField(max_length=50, blank=False, null=False)
-
+    unit = models.CharField(max_length=50, blank=False, null=False)
+    
     def __str__(self):
         return f'{self.reminder.medication_name} - {str(self.time)} - {self.dosage}'
 
