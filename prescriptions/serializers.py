@@ -22,3 +22,15 @@ class HandwritingAnalysisSerializer(serializers.ModelSerializer):
         Custom create method to handle additional fields.
         """
         return HandwritingAnalysisTable.objects.create(**validated_data)
+
+
+class HandwritingAnalysisInputSerializer(serializers.Serializer):
+    image_url = serializers.URLField()
+
+    def validate_image_url(self, value):
+        """
+        Validate the `image_url` field to ensure it is a valid URL.
+        """
+        if not value.startswith(('http://', 'https://')):
+            raise serializers.ValidationError("Invalid image URL. It must start with 'http://' or 'https://'.")
+        return value

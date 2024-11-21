@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import HandwritingAnalysisTable
-from .serializers import HandwritingAnalysisSerializer
+from .serializers import HandwritingAnalysisSerializer , HandwritingAnalysisInputSerializer
 from mltu.configs import BaseModelConfigs
 import google.generativeai as genai
 import os
@@ -30,7 +30,7 @@ class HandwritingAnalysisView(APIView):
 
     def post(self, request):
         # Validate the input data
-        serializer = HandwritingAnalysisSerializer(data=request.data, context={'request': request})
+        serializer = HandwritingAnalysisInputSerializer(data=request.data, context={'request': request})
         
         if not serializer.is_valid():
             return Response(

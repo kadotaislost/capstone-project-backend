@@ -3,7 +3,7 @@ from django.conf import settings
 
 class HandwritingAnalysisTable(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='handwriting_analyses', help_text="User who uploaded the image")
-    prescription_name = models.CharField(max_length=100, help_text="Name of the prescription", null=False, blank=False)
+    prescription_name = models.CharField(max_length=100, help_text="Name of the prescription")
     image_url = models.URLField(max_length=500, help_text="URL of the uploaded image")
     recognized_text = models.TextField(help_text="Text recognized from the image")
     analyzed_text = models.TextField(help_text="Analyzed or processed text")
