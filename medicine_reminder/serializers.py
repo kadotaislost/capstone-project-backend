@@ -1,12 +1,27 @@
 
 from rest_framework import serializers
 from .models import Reminder, ReminderTime
+from datetime import datetime
 
 class ReminderTimeSerializer(serializers.ModelSerializer):
+    time = serializers.CharField()  # Accept and return time as a string in 12-hour format
+
     class Meta:
         model = ReminderTime
-        fields = ['id','time', 'dosage']
+        fields = ['id', 'time', 'dosage']
 
+    def validate_time(self, value):
+        try:
+            # Convert 12-hour format (e.g., "02:30 PM") to 24-hour format
+            return datetime.strptime(value, "%I:%M %p").time()
+        except ValueError:
+            raise serializers.ValidationError("Time must be in the format HH:MM AM/PM.")
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Convert 24-hour format to 12-hour format for output
+        representation['time'] = instance.time.strftime("%I:%M %p")
+        return representation
 
 class ReminderSerializer(serializers.ModelSerializer):
     times = ReminderTimeSerializer(many=True)
