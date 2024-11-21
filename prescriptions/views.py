@@ -24,7 +24,7 @@ model = ImageToWordModel(model_path="model.onnx", char_list=configs.vocab)
 
 class HandwritingAnalysisView(APIView):
     """
-    API view to process an image URL, recognize handwriting, analyze text, and save to the database.
+    API view to process an image URL, recognize handwriting, and analyze text without storing it.
     """
     permission_classes = [IsAuthenticated]
 
@@ -70,21 +70,15 @@ class HandwritingAnalysisView(APIView):
             # Step 3: Analyze the recognized text using Gemini API
             analyzed_text = self.analyze_text_with_gemini(recognized_text)
 
-            # Save the results to the database via serializer
-            try:
-                serializer.save(
-                    user=request.user,  # Associate the analysis with the authenticated user
-                    recognized_text=recognized_text,
-                    analyzed_text=analyzed_text
-                )
-            except Exception as e:
-                return Response(
-                    {"error": "Failed to save analysis results", "details": str(e)},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            # Return the serialized data as a response
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Return the results without saving to the database
+            return Response(
+                {   
+                    "image_url": image_url,
+                    "recognized_text": recognized_text,
+                    "analyzed_text": analyzed_text
+                },
+                status=status.HTTP_200_OK
+            )
 
         except requests.exceptions.RequestException as e:
             return Response(
@@ -166,6 +160,33 @@ class HandwritingAnalysisView(APIView):
             return response.text
         except Exception as e:
             return f"An error occurred while analyzing the text: {str(e)}"
+
+class HandwritingAnalysisStoreView(APIView):
+    """
+    API view to store recognized and analyzed data into the database.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Validate the input data
+        serializer = HandwritingAnalysisSerializer(data=request.data, context={'request': request})
+        
+        if not serializer.is_valid():
+            return Response(
+                {"error": "Validation failed", "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Save the data to the database
+            serializer.save(user=request.user)
+            return Response({"message": "prescription saved successfully"}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {"error": "Failed to save prescription", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
    
 class UserPrescriptionsView(APIView):

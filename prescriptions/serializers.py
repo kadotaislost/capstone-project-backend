@@ -6,8 +6,8 @@ class HandwritingAnalysisSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = HandwritingAnalysisTable
-        fields = ['id', 'image_url', 'recognized_text', 'analyzed_text', 'user', 'created_at']
-        read_only_fields = ['recognized_text', 'analyzed_text', 'created_at']
+        fields = ['id', 'image_url','prescription_name', 'recognized_text', 'analyzed_text', 'user', 'created_at']
+        read_only_fields = ['created_at']
 
     def validate_image_url(self, value):
         """
