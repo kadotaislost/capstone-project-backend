@@ -191,13 +191,18 @@ class HandwritingAnalysisStoreView(APIView):
    
 class UserPrescriptionsView(APIView):
     """
-    API view to list all prescriptions of the authenticated user.
+    API view to list all prescriptions of the authenticated user with optional search functionality.
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         # Fetch all prescriptions for the authenticated user
         prescriptions = HandwritingAnalysisTable.objects.filter(user=request.user)
+
+        # Check if a search query parameter is provided
+        search_query = request.query_params.get('search', None)
+        if search_query:
+            prescriptions = prescriptions.filter(prescription_name__icontains=search_query)
 
         if not prescriptions.exists():
             return Response(
@@ -210,6 +215,7 @@ class UserPrescriptionsView(APIView):
 
         # Return the serialized data
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
         
 class PrescriptionDetailView(APIView):

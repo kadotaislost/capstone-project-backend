@@ -10,9 +10,9 @@ class ReminderAdmin(admin.ModelAdmin):
     
     
 class ReminderTimeAdmin(admin.ModelAdmin):
-    list_display = ['time', 'dosage', 'reminder']
+    list_display = ['time', 'dosage', 'reminder', 'unit']
     fieldsets = (
-        ('Reminder Time Details', {'fields': ('reminder', 'time', 'dosage')}),
+        ('Reminder Time Details', {'fields': ('reminder', 'time', 'dosage' ,'unit')}),
     )
 
 admin.site.register(Reminder, ReminderAdmin)
