@@ -1,0 +1,522 @@
+openapi: 3.0.0
+info:
+  title: PrescriptAid
+  version: 1.0.0
+  description: The PrescriptAid API provides services for managing user accounts, email verification, password resets, medication reminders, and prescription analysis and management. 
+servers:
+  - url: http://127.0.0.1:8000/api
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+tags:
+  - name: Authentication
+  - name: User Profile
+  - name: Medicine Details
+  - name: Reminders
+  - name: Prescriptions
+paths:
+  /register/:
+    post:
+      tags:
+        - Authentication
+      summary: User Registration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: sachinlama9000009@gmail.com
+                full_name: sachin lama
+                phone_number: '436737373'
+                password: catdogNepal123
+                confirm_password: catdogNepal123
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /verify-email/:
+    post:
+      tags:
+        - Authentication
+      summary: Verify-email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                otp: '2864'
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /login/:
+    post:
+      tags:
+        - Authentication
+      summary: Login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: sachinlama9000009@gmail.com
+                password: catdogNepal123
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /resend-otp/:
+    post:
+      tags:
+        - Authentication
+      summary: resend otp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: sachinlama99@gmail.com
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /token/refresh/:
+    post:
+      tags:
+        - Authentication
+      summary: token refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                refresh: >-
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNjEzNzIwMSwiaWF0IjoxNzI2MDUwODAxLCJqdGkiOiI0ZTg5NGFmMGYwMjc0YjI3YmU5NjQwOWUyYWMyNDEwYyIsInVzZXJfaWQiOjI5fQ.9xpObBYBNb_iyAkh5Kfri3n-ejyb6jxdQivEuOEGlwU
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /change-password/:
+    post:
+      tags:
+        - Authentication
+      summary: change password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                old_password: catdogNepal123
+                new_password: lamabhai123
+                confirm_new_password: lamabhai123
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /password-reset-request/:
+    post:
+      tags:
+        - Authentication
+      summary: password reset request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                email: sachinlama9000009@gmail.com
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /password-reset-confirm/NDc/cgw9sn-911abc6d5b44b5769be823f4bf0ca0ad/:
+    post:
+      tags:
+        - Authentication
+      summary: password-reset-confirm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                new_password: nepalDai123
+                confirm_new_password: nepalDai123
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /logout/:
+    post:
+      tags:
+        - Authentication
+      summary: Logout
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                refresh_token: >-
+                  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcyNjEzNzIwMSwiaWF0IjoxNzI2MDUwODAxLCJqdGkiOiI0ZTg5NGFmMGYwMjc0YjI3YmU5NjQwOWUyYWMyNDEwYyIsInVzZXJfaWQiOjI5fQ.9xpObBYBNb_iyAkh5Kfri3n-ejyb6jxdQivEuOEGlwU
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /update-user-profile/:
+    put:
+      tags:
+        - User Profile
+      summary: update profile
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profile_pic:
+                  type: string
+                  format: binary
+                blood_group:
+                  type: string
+                  example: AB+
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /get-user-profile/:
+    get:
+      tags:
+        - User Profile
+      summary: get user profile
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /search-medicine/:
+    get:
+      tags:
+        - Medicine Details
+      summary: Medicine Search and Retrieval
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: medicine
+          in: query
+          schema:
+            type: string
+          example: betadine
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /reminders/create/:
+    post:
+      tags:
+        - Reminders
+      summary: Reminder Create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                medication_name: Hormonal medication
+                reason_for_medication: Hormone regulation
+                frequency: day_of_week
+                day_of_week:
+                  - sunday
+                  - monday
+                  - tuesday
+                start_date: '2024-09-30'
+                end_date: '2024-11-21'
+                memo: Take at the same time each day
+                repeat: true
+                times:
+                  - time: 10:00 AM
+                    dosage: 2mg
+                    unit: pills
+                  - time: 11:00 PM
+                    dosage: 5mg
+                    unit: tablets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /reminders/:
+    get:
+      tags:
+        - Reminders
+      summary: Reminder List
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /reminders/5/:
+    delete:
+      tags:
+        - Reminders
+      summary: Reminder Delete
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /reminders/10/:
+    get:
+      tags:
+        - Reminders
+      summary: Reminder View
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /reminders/10/update/:
+    put:
+      tags:
+        - Reminders
+      summary: Reminder Update
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                medication_name: Paracetamol
+                reason_for_medication: Pain relief
+                frequency: daily
+                start_date: '2024-09-29'
+                end_date: '2024-09-30'
+                created_at: '2024-09-29T14:49:42.047357+05:45'
+                updated_at: '2024-09-29T14:49:42.047357+05:45'
+                times:
+                  - time: 09:00 AM
+                    dosage: '1'
+                    unit: tablets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /prescription/analyze_image/:
+    post:
+      tags:
+        - Prescriptions
+      summary: analyze prescription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                image_url: >-
+                  https://res.cloudinary.com/doafbg5ys/image/upload/v1732087771/ghssogws0pnn95dj8d7d.png
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /prescriptions/:
+    get:
+      tags:
+        - Prescriptions
+      summary: get all prescriptions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /prescriptions/7/:
+    get:
+      tags:
+        - Prescriptions
+      summary: Prescription view
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /prescriptions/3/:
+    delete:
+      tags:
+        - Prescriptions
+      summary: Delete prescription
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /prescriptions/create/:
+    post:
+      tags:
+        - Prescriptions
+      summary: store prescription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                prescription_name: meow 2
+                image_url: >-
+                  https://res.cloudinary.com/doafbg5ys/image/upload/v1732087771/ghssogws0pnn95dj8d7d.png
+                recognized_text: One tablet of meftal twice a day
+                analyzed_text: >
+                  ---
+
+                  Medicine Name:  Meftal Spas
+
+
+                  Description: Meftal Spas is a combination medicine containing
+                  a pain reliever (Mefenamic acid) and a muscle relaxant
+                  (Dicyclomine). It works by reducing pain and relaxing the
+                  muscles.  Note that the original text misspelled the name, and
+                  there is a difference between "Meftal" and "Meftal Spas." 
+                  This analysis assumes "Meftal" refers to "Meftal Spas," a
+                  common over-the-counter medication in some regions.  If a
+                  different medication is intended, the analysis may not be
+                  accurate.
+
+
+                  Uses:  It's used to relieve pain and muscle spasms associated
+                  with menstrual cramps, headaches, and other conditions causing
+                  pain and muscle stiffness.
+
+
+                  Side Effects: Common side effects can include nausea,
+                  vomiting, diarrhea, stomach upset, and dizziness.  More
+                  serious side effects are less common but may include allergic
+                  reactions (like skin rash or difficulty breathing).
+
+
+                  Drug Interactions:  Meftal Spas may interact with other
+                  medications.  Information not available on specific
+                  interactions without more details.
+
+
+                  Dosage Information:  The typical dosage is one tablet twice a
+                  day, as indicated in the provided text. However, the correct
+                  dosage should always be determined by a doctor or pharmacist
+                  based on individual needs and health conditions.
+
+
+                  Precautions:  Meftal Spas should be avoided by individuals
+                  with certain medical conditions, such as kidney or liver
+                  problems, or allergies to its components. Pregnant or
+                  breastfeeding women should consult a doctor before use.
+
+
+                  ---
+
+
+                  This information is for educational purposes only and should
+                  not replace professional medical advice. Always consult a
+                  healthcare provider for advice tailored to your health.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

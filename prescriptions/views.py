@@ -24,7 +24,7 @@ model = ImageToWordModel(model_path="model.onnx", char_list=configs.vocab)
 
 class HandwritingAnalysisView(APIView):
     """
-    API view to process an image URL, recognize handwriting, and analyze text without storing it.
+    API view to process an image URL and  recognize handwriting
     """
     permission_classes = [IsAuthenticated]
 

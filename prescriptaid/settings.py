@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'prescriptions',
     'rest_framework_simplejwt.token_blacklist',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -113,8 +114,22 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
        
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',  # Add this line
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'PrescriptAid API',
+    'DESCRIPTION': 'API documentation for PrescriptAid, including authentication, medicine reminders, and prescription analysis.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,  # Exclude the schema itself from being exposed in Swagger/Redoc UI
+    'SCHEMA_PATH_PREFIX': '/api',  # Optional: Adjust to filter paths by prefix
+    'CONTACT': {
+        'name': 'Support Team',
+        'email': os.getenv('SUPPORT_EMAIL', 'support@example.com'),
+    },
+}
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # Short lifetime for access tokens

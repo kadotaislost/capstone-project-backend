@@ -13,10 +13,16 @@ import google.generativeai as genai
 import re
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.http import  HttpResponse
+import yaml
 
 User = get_user_model()
 
-# Create your views here.
+def serve_custom_openapi_yaml(request):
+    with open("openapi.yaml", "r") as file:
+        return HttpResponse(file.read(), content_type="application/yaml")
+
+# User Registration View
 class UserRegisterView(APIView):
     permission_classes = [AllowAny]
     def post(self, request, *args, **kwargs):
